@@ -3,12 +3,18 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
-
-// ✅ Load service account credentials from local file
-const serviceAccount = require("./service-account.json");
-
 const app = express();
-const PORT = process.env.PORT || 3000; // Railway injects this env var
+const PORT = process.env.PORT || 3000; // Use 3000 for local, Railway injects PORT automatically
+
+// ✅ Load Firebase service account from local file (for Railway and local both)
+let serviceAccount;
+try {
+  serviceAccount = require("./service-account.json");
+  console.log("✅ Firebase credentials loaded successfully.");
+} catch (error) {
+  console.error("❌ Failed to load service-account.json:", error.message);
+  process.exit(1); // Exit if credentials are invalid
+}
 
 // ✅ Initialize Firebase Admin SDK
 try {
@@ -24,8 +30,17 @@ try {
 // ✅ Middleware
 app.use(bodyParser.json({ limit: "1mb" }));
 
-// ✅ API: Send topic-based FCM notification
+// ✅ Health check endpoint
+app.get("/test", (req, res) => {
+  console.log("👀 /test hit");
+  res.send("✅ Server is alive.");
+});
+
+// ✅ Topic notification endpoint with logging
 app.post("/send-topic-notification", async (req, res) => {
+  console.log("🔥 Incoming /send-topic-notification request:");
+  console.log(JSON.stringify(req.body, null, 2));
+
   const { topic, title, body, data } = req.body;
 
   if (!topic || !title || !body) {
@@ -37,7 +52,7 @@ app.post("/send-topic-notification", async (req, res) => {
     notification: { title, body },
     data: {
       ...data,
-      click_action: "FLUTTER_NOTIFICATION_CLICK", // For Flutter foreground clicks
+      click_action: "FLUTTER_NOTIFICATION_CLICK", // Required for foreground clicks
     },
     topic,
   };
@@ -45,17 +60,13 @@ app.post("/send-topic-notification", async (req, res) => {
   try {
     const response = await admin.messaging().send(message);
     console.log("✅ Notification sent to topic:", topic);
-    console.log("📝 Response:", response);
+    console.log("📦 FCM Response:", response);
     res.status(200).json({ success: true, response });
   } catch (error) {
-    console.error("❌ Failed to send FCM notification:", error);
+    console.error("❌ Failed to send FCM notification:", error.message);
+    console.error("💥 Full error:", error);
     res.status(500).json({ error: error.message });
   }
-});
-
-// ✅ Health check
-app.get("/", (req, res) => {
-  res.send("🚀 FCM Notification Server is running.");
 });
 
 // ✅ 404 fallback
