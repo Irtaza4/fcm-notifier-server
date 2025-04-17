@@ -1,24 +1,14 @@
 // index.js
 
-// Optional: Uncomment if using a local .env file for testing
-// require("dotenv").config();
-
 const express = require("express");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
 
-const app = express();
-const PORT = process.env.PORT || 8080; // Railway injects this env var
+// ✅ Load service account credentials from local file
+const serviceAccount = require("./service-account.json");
 
-// ✅ Load Firebase credentials from environment variable
-let serviceAccount;
-try {
-  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  console.log("✅ Firebase credentials loaded successfully.");
-} catch (error) {
-  console.error("❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:", error.message);
-  process.exit(1); // Exit if credentials are invalid
-}
+const app = express();
+const PORT = process.env.PORT || 3000; // Railway injects this env var
 
 // ✅ Initialize Firebase Admin SDK
 try {
