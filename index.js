@@ -1,4 +1,3 @@
-require("dotenv").config(); // Load environment variables from .env
 const express = require("express");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
@@ -6,8 +5,8 @@ const admin = require("firebase-admin");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Load service account from path in .env
-const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH);
+// ✅ Load service account from environment variable (Railway)
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -27,7 +26,7 @@ app.post("/send-topic-notification", async (req, res) => {
     notification: { title, body },
     data: {
       ...data,
-      click_action: "FLUTTER_NOTIFICATION_CLICK",
+      click_action: "FLUTTER_NOTIFICATION_CLICK", // Required for Flutter
     },
     topic,
   };
@@ -42,9 +41,9 @@ app.post("/send-topic-notification", async (req, res) => {
   }
 });
 
-// Root endpoint for test
+// Root endpoint to verify server is running
 app.get("/", (req, res) => {
-  res.send("🚀 FCM Server is up!");
+  res.send("🚀 FCM Server is up and running!");
 });
 
 app.listen(PORT, () => {
