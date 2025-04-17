@@ -1,3 +1,4 @@
+require("dotenv").config(); // Load environment variables from .env
 const express = require("express");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
@@ -5,7 +6,8 @@ const admin = require("firebase-admin");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const serviceAccount = require("./service-account.json");
+// Load service account from path in .env
+const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_PATH);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -47,4 +49,4 @@ app.get("/", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`✅ Server is running on port ${PORT}`);
-});  
+});
