@@ -1,4 +1,5 @@
-// const express = require("express");
+require("dotenv").config(); // Loads .env (optional if using Railway)
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const admin = require("firebase-admin");
@@ -6,16 +7,16 @@ const admin = require("firebase-admin");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ Try to parse FIREBASE_SERVICE_ACCOUNT from .env or Railway config
+// ✅ Load Firebase credentials from environment variable
 let serviceAccount;
 try {
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 } catch (error) {
   console.error("❌ Failed to parse FIREBASE_SERVICE_ACCOUNT:", error.message);
-  process.exit(1); // Exit the app if credentials are bad
+  process.exit(1); // Exit if the credentials are not valid
 }
 
-// ✅ Initialize Firebase Admin
+// ✅ Initialize Firebase Admin SDK
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -23,7 +24,7 @@ admin.initializeApp({
 // ✅ Middleware
 app.use(bodyParser.json({ limit: "1mb" }));
 
-// ✅ API: Send topic notification
+// ✅ API: Send topic-based FCM notification
 app.post("/send-topic-notification", async (req, res) => {
   const { topic, title, body, data } = req.body;
 
@@ -35,7 +36,7 @@ app.post("/send-topic-notification", async (req, res) => {
     notification: { title, body },
     data: {
       ...data,
-      click_action: "FLUTTER_NOTIFICATION_CLICK", // Required for Flutter
+      click_action: "FLUTTER_NOTIFICATION_CLICK", // Important for Flutter
     },
     topic,
   };
@@ -50,17 +51,17 @@ app.post("/send-topic-notification", async (req, res) => {
   }
 });
 
-// ✅ Root endpoint
+// ✅ Health check route
 app.get("/", (req, res) => {
-  res.send("🚀 FCM Server is up and running!");
+  res.send("🚀 FCM Server is running!");
 });
 
-// ✅ Fallback 404 handler
+// ✅ 404 fallback
 app.use((req, res) => {
-  res.status(404).json({ error: "Not found" });
+  res.status(404).json({ error: "Endpoint not found" });
 });
 
 // ✅ Start server
 app.listen(PORT, () => {
-  console.log(`✅ Server running in ${process.env.NODE_ENV || "development"} on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
